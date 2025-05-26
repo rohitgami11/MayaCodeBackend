@@ -9,7 +9,7 @@ const app = express();
 
 app.use(
   session({
-    secret: "secret",
+    secret: process.env.SESSION_SECRET || "secret",
     resave: false,
     saveUninitialized: true,
   })
@@ -23,7 +23,8 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/auth/google/callback",
+      // callbackURL: "http://localhost:3000/auth/google/callback",
+      callbackURL: "https://mayacodebackend.onrender.com/auth/google/callback",
     },
     (accessToken, refreshToken, profile, done) => {
       return done(null, profile);
@@ -61,6 +62,7 @@ app.get("/logout", (req, res) => {
   });
 });
 
-app.listen(3000, () => {
-  console.log(`Server is running at port 3000`);
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
+  console.log(`Server is running at port ${PORT}`);
 });
