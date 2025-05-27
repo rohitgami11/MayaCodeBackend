@@ -4,7 +4,8 @@ const userProfileSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
   name: {
     type: String,
@@ -43,9 +44,6 @@ const userProfileSchema = new mongoose.Schema({
     storiesCount: { type: Number, default: 0 },
     helpPostsCount: { type: Number, default: 0 },
     askPostsCount: { type: Number, default: 0 },
-    totalLikes: { type: Number, default: 0 },
-    totalComments: { type: Number, default: 0 },
-    totalViews: { type: Number, default: 0 },
     completedHelps: { type: Number, default: 0 },
     receivedHelps: { type: Number, default: 0 }
   },
@@ -56,5 +54,9 @@ const userProfileSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Drop the userId index if it exists
+userProfileSchema.index({ userId: 1 }, { unique: true, sparse: true });
+userProfileSchema.index({ phone: 1 }, { unique: true });
 
 module.exports = mongoose.model('UserProfile', userProfileSchema); 
