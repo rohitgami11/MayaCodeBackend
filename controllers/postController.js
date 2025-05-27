@@ -1,12 +1,16 @@
 const Post = require('../models/Post');
+const { logger } = require('../utils/logger');
 
 // Create a new post
 exports.createPost = async (req, res) => {
   try {
+    logger.info('📝 Create Post - Request:', req.body);
     const post = new Post(req.body);
     await post.save();
+    logger.info('✅ Create Post - Success:', post);
     res.status(201).json(post);
   } catch (error) {
+    logger.error('❌ Create Post - Error:', error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -14,9 +18,12 @@ exports.createPost = async (req, res) => {
 // Get all posts
 exports.getPosts = async (req, res) => {
   try {
+    logger.info('🔍 Get Posts - Request received');
     const posts = await Post.find().sort({ createdAt: -1 });
+    logger.info('✅ Get Posts - Success:', { count: posts.length });
     res.json(posts);
   } catch (error) {
+    logger.error('❌ Get Posts - Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -24,12 +31,19 @@ exports.getPosts = async (req, res) => {
 // Get a single post
 exports.getPost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
+    const { id } = req.params;
+    logger.info('🔍 Get Post - Request:', { id });
+    
+    const post = await Post.findById(id);
     if (!post) {
+      logger.warn('❌ Get Post - Not found:', id);
       return res.status(404).json({ message: 'Post not found' });
     }
+    
+    logger.info('✅ Get Post - Success:', post);
     res.json(post);
   } catch (error) {
+    logger.error('❌ Get Post - Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -37,16 +51,24 @@ exports.getPost = async (req, res) => {
 // Update a post
 exports.updatePost = async (req, res) => {
   try {
+    const { id } = req.params;
+    logger.info('⚙️ Update Post - Request:', { id, body: req.body });
+    
     const post = await Post.findByIdAndUpdate(
-      req.params.id,
+      id,
       req.body,
       { new: true, runValidators: true }
     );
+    
     if (!post) {
+      logger.warn('❌ Update Post - Not found:', id);
       return res.status(404).json({ message: 'Post not found' });
     }
+    
+    logger.info('✅ Update Post - Success:', post);
     res.json(post);
   } catch (error) {
+    logger.error('❌ Update Post - Error:', error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -54,52 +76,34 @@ exports.updatePost = async (req, res) => {
 // Delete a post
 exports.deletePost = async (req, res) => {
   try {
-    const post = await Post.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    logger.info('🗑️ Delete Post - Request:', { id });
+    
+    const post = await Post.findByIdAndDelete(id);
     if (!post) {
+      logger.warn('❌ Delete Post - Not found:', id);
       return res.status(404).json({ message: 'Post not found' });
     }
+    
+    logger.info('✅ Delete Post - Success:', post);
     res.json({ message: 'Post deleted successfully' });
   } catch (error) {
+    logger.error('❌ Delete Post - Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// Add a comment to a post
-exports.addComment = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-    post.comments.push(req.body);
-    await post.save();
-    res.json(post);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Like a post
-exports.likePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-    post.likes += 1;
-    await post.save();
-    res.json(post);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Get posts by user ID
+// Get posts by phone
 exports.getUserPosts = async (req, res) => {
   try {
-    const posts = await Post.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+    const { phone } = req.params;
+    logger.info('🔍 Get User Posts - Request:', { phone });
+    
+    const posts = await Post.find({ phone }).sort({ createdAt: -1 });
+    logger.info('✅ Get User Posts - Success:', { count: posts.length });
     res.json(posts);
   } catch (error) {
+    logger.error('❌ Get User Posts - Error:', error);
     res.status(500).json({ message: error.message });
   }
 }; 

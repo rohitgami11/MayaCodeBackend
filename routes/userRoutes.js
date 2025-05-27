@@ -16,6 +16,15 @@ router.use((req, res, next) => {
   next();
 });
 
+// Error handling middleware
+router.use((err, req, res, next) => {
+  console.error('❌ Route Error:', err);
+  res.status(500).json({
+    message: 'Internal server error',
+    error: err.message
+  });
+});
+
 // User profile routes
 router.get('/phone/:phone', userController.getUserByPhone);
 router.put('/phone/:phone', userController.createOrUpdateUser);

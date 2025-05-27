@@ -34,7 +34,8 @@ exports.createOrUpdateUser = async (req, res) => {
       age: req.body.age,
       location: req.body.location,
       languages: req.body.languages || [],
-      profileImage: req.body.profileImage
+      profileImage: req.body.profileImage,
+      lastActive: new Date()
     };
     
     console.log('⚙️ Create/Update User - Request body:', req.body);
@@ -56,6 +57,7 @@ exports.createOrUpdateUser = async (req, res) => {
     // Clean up updates
     console.log('⚙️ Create/Update User - Cleaning updates');
     const cleanedUpdates = {
+      phone, // Add phone to the updates
       name: updates.name,
       age: updates.age,
       location: updates.location,

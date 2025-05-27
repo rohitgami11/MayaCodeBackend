@@ -1,34 +1,7 @@
 const mongoose = require('mongoose');
 
-const commentSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  },
-  likes: {
-    type: Number,
-    default: 0
-  },
-  replies: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Comment'
-  }]
-});
-
 const postSchema = new mongoose.Schema({
-  userId: {
+  phone: {
     type: String,
     required: true
   },
@@ -55,11 +28,6 @@ const postSchema = new mongoose.Schema({
     enum: ['active', 'completed', 'archived'],
     default: 'active'
   },
-  likes: {
-    type: Number,
-    default: 0
-  },
-  comments: [commentSchema],
   views: {
     type: Number,
     default: 0
