@@ -8,17 +8,17 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const postRoutes = require('./routes/postRoutes');
 const userRoutes = require('./routes/userRoutes');
-const storyRoutes = require('./routes/storyRoutes');
-const commentRoutes = require('./routes/commentRoutes');
-const likeRoutes = require('./routes/likeRoutes');
-const viewRoutes = require('./routes/viewRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const searchRoutes = require('./routes/searchRoutes');
-const reportRoutes = require('./routes/reportRoutes');
-const feedbackRoutes = require('./routes/feedbackRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const authRoutes = require('./routes/authRoutes');
+// const storyRoutes = require('./routes/storyRoutes');
+// const commentRoutes = require('./routes/commentRoutes');
+// const likeRoutes = require('./routes/likeRoutes');
+// const viewRoutes = require('./routes/viewRoutes');
+// const notificationRoutes = require('./routes/notificationRoutes');
+// const searchRoutes = require('./routes/searchRoutes');
+// const reportRoutes = require('./routes/reportRoutes');
+// const feedbackRoutes = require('./routes/feedbackRoutes');
+// const analyticsRoutes = require('./routes/analyticsRoutes');
+// const adminRoutes = require('./routes/adminRoutes');
+// const authRoutes = require('./routes/authRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 const { logger } = require('./utils/logger');
 
@@ -30,13 +30,12 @@ app.use(express.urlencoded({extended: false}))
 // Connect to MongoDB
 connectDB();
 
-
 // Middleware
 app.use(cors());
 
 // Debug middleware to log raw request
 app.use((req, res, next) => {
-  console.log('📥 Raw Request:', {
+  logger.info('📥 Raw Request:', {
     method: req.method,
     url: req.url,
     headers: req.headers,
@@ -47,7 +46,7 @@ app.use((req, res, next) => {
 
 // Debug middleware to log parsed request
 app.use((req, res, next) => {
-  console.log('📦 Parsed Request:', {
+  logger.info('📦 Parsed Request:', {
     method: req.method,
     url: req.url,
     body: req.body
@@ -87,17 +86,6 @@ passport.deserializeUser((user, done) => done(null, user));
 // Routes
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/stories', storyRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/likes', likeRoutes);
-app.use('/api/views', viewRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/feedback', feedbackRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
 
 app.get("/", (req, res) => {
   res.send("<a href='/auth/google'>Login with Google</a>");
@@ -137,5 +125,5 @@ process.on('unhandledRejection', (err) => {
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-  console.log(`Server is running at port ${PORT}`);
+  logger.info(`Server is running at port ${PORT}`);
 });
