@@ -5,20 +5,44 @@ const passport = require("passport");
 const session = require("express-session");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
 const postRoutes = require('./routes/postRoutes');
 const userRoutes = require('./routes/userRoutes');
 
+const app = express();
+// Basic JSON parsing
+app.use(express.json())
+app.use(express.urlencoded({extended: false}))
+
 // Connect to MongoDB
 connectDB();
 
-const app = express();
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.json());
+
+// Debug middleware to log raw request
+app.use((req, res, next) => {
+  console.log('📥 Raw Request:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body
+  });
+  next();
+});
+
+// Debug middleware to log parsed request
+app.use((req, res, next) => {
+  console.log('📦 Parsed Request:', {
+    method: req.method,
+    url: req.url,
+    body: req.body
+  });
+  next();
+});
+
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
@@ -75,6 +99,15 @@ app.get("/profile", (req, res) => {
 app.get("/logout", (req, res) => {
   req.logout(() => {
     res.redirect("/");
+  });
+});
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    message: 'Internal Server Error',
+    error: err.message 
   });
 });
 

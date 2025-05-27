@@ -2,30 +2,29 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 
-// Add logging middleware
+// Add detailed logging middleware
 router.use((req, res, next) => {
-  console.log('🔍 Incoming request:', {
+  console.log('🔍 Request Details:', {
+    timestamp: new Date().toISOString(),
     method: req.method,
     url: req.originalUrl,
     params: req.params,
-    body: req.body,
-    headers: req.headers
+    query: req.query,
+    headers: req.headers,
+    body: req.body
   });
   next();
 });
 
-// Create new user profile
-router.post('/phone/:phone', userController.createUserProfile);
+// User profile routes
+router.get('/phone/:phone', userController.getUserByPhone);
+router.put('/phone/:phone', userController.createOrUpdateUser);
+router.delete('/phone/:phone', userController.deleteUser);
 
-// Profile routes
-router.get('/phone/:phone', userController.getUserProfile);
-router.put('/phone/:phone', userController.updateUserProfile);
-router.delete('/phone/:phone', userController.deleteUserProfile);
-
-// Stats routes
+// User stats routes
 router.put('/phone/:phone/stats', userController.updateUserStats);
 
-// Post management routes
+// User posts routes
 router.post('/phone/:phone/posts', userController.addCreatedPost);
 
 // Preferences routes

@@ -1,188 +1,119 @@
 const UserProfile = require('../models/User');
 
-// Get user profile by phone number
-exports.getUserProfile = async (req, res) => {
+// Get user profile by phone
+exports.getUserByPhone = async (req, res) => {
   try {
     const { phone } = req.params;
-    console.log('🔍 Get Profile - Request:', {
-      phone,
-      params: req.params,
-      query: req.query,
-      body: req.body
-    });
-    
-    const profile = await UserProfile.findOne({ phone });
-    console.log('🔍 Get Profile - Database Result:', profile);
-    
-    if (!profile) {
-      console.log('❌ Get Profile - Profile not found for phone:', phone);
-      return res.status(404).json({ message: 'User profile not found' });
+    console.log('🔍 Get User - Request:', { phone });
+
+    const user = await UserProfile.findOne({ phone });
+    if (!user) {
+      console.log('❌ Get User - User not found:', phone);
+      return res.status(404).json({ message: 'User not found' });
     }
-    console.log('✅ Get Profile - Success:', profile);
-    res.json(profile);
+
+    console.log('✅ Get User - Success:', user);
+    res.json(user);
   } catch (error) {
-    console.error('❌ Get Profile - Error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('❌ Get User - Error:', error);
+    res.status(500).json({ message: 'Error getting user profile', error: error.message });
   }
 };
 
-// Create new user profile
-exports.createUserProfile = async (req, res) => {
+// Create or update user profile
+exports.createOrUpdateUser = async (req, res) => {
   try {
-    console.log('📝 Create Profile - Full Request Object:', {
-      params: req.params,
-      body: req.body,
-      headers: req.headers,
-      query: req.query,
-      method: req.method,
-      url: req.url,
-      originalUrl: req.originalUrl
-    });
-
-    const { phone, userId, ...userData } = req.body;
-    console.log('📝 Create Profile - Extracted Data:', {
-      phone,
-      userId,
-      userData,
-      body: req.body
-    });
-
-    // Check if user already exists
-    const existingUser = await UserProfile.findOne({ phone });
-    console.log('📝 Create Profile - Existing User Check:', existingUser);
-
-    if (existingUser) {
-      console.log('❌ Create Profile - User already exists:', phone);
-      return res.status(400).json({ message: 'User profile already exists' });
-    }
-
-    // Create new user profile
-    const newProfile = new UserProfile({
-      phone,
-      userId,
-      ...userData,
-      lastActive: new Date()
-    });
-
-    console.log('📝 Create Profile - New Profile Object:', {
-      newProfile: newProfile.toObject(),
-      validationState: newProfile.validateSync()
-    });
-
-    const savedProfile = await newProfile.save();
-    console.log('✅ Create Profile - Success:', {
-      id: savedProfile._id,
-      phone: savedProfile.phone,
-      userId: savedProfile.userId,
-      name: savedProfile.name
-    });
-    res.status(201).json(savedProfile);
-  } catch (error) {
-    console.error('❌ Create Profile - Error:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      errors: error.errors
-    });
-    res.status(400).json({ 
-      message: error.message,
-      details: error.errors || {}
-    });
-  }
-};
-
-// Update user profile (only if exists)
-exports.updateUserProfile = async (req, res) => {
-  try {
+    console.log('⚙️ Create/Update User - Starting process');
     const { phone } = req.params;
-    const { userId, ...updates } = req.body;
-    console.log('🔄 Update Profile - Request Details:', {
-      phone,
-      userId,
-      updates,
-      params: req.params,
-      body: req.body,
-      headers: req.headers
-    });
-
-    // First check if user exists
-    const existingUser = await UserProfile.findOne({ phone });
-    console.log('🔄 Update Profile - Existing User Check:', {
-      found: !!existingUser,
-      userId: existingUser?.userId,
-      phone: existingUser?.phone
-    });
-
-    if (!existingUser) {
-      console.log('❌ Update Profile - User not found:', phone);
-      return res.status(404).json({ 
-        message: 'User profile not found. Please create a profile first.',
-        details: { phone }
+    console.log('⚙️ Create/Update User - Phone:', phone);
+    
+    // Get values from request body
+    const updates = {
+      name: req.body.name,
+      userType: req.body.userType,
+      age: req.body.age,
+      location: req.body.location,
+      languages: req.body.languages || [],
+      profileImage: req.body.profileImage
+    };
+    
+    console.log('⚙️ Create/Update User - Request body:', req.body);
+    console.log('⚙️ Create/Update User - Updates:', updates);
+    
+    // Validate required fields
+    if (!updates.name || !updates.userType) {
+      console.log('❌ Create/Update User - Missing required fields:', {
+        hasName: !!updates.name,
+        hasUserType: !!updates.userType,
+        body: req.body
+      });
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        required: ['name', 'userType']
       });
     }
 
-    // Update the profile
-    console.log('🔄 Update Profile - Attempting Update:', {
-      filter: { phone },
-      updates: { 
-        ...updates,
-        lastActive: new Date()
-      }
-    });
+    // Clean up updates
+    console.log('⚙️ Create/Update User - Cleaning updates');
+    const cleanedUpdates = {
+      name: updates.name,
+      age: updates.age,
+      location: updates.location,
+      userType: updates.userType,
+      languages: updates.languages,
+      profileImage: updates.profileImage,
+      lastActive: new Date()
+    };
 
-    const profile = await UserProfile.findOneAndUpdate(
+    // Remove undefined values
+    Object.keys(cleanedUpdates).forEach(key => 
+      cleanedUpdates[key] === undefined && delete cleanedUpdates[key]
+    );
+    console.log('⚙️ Create/Update User - Final updates:', cleanedUpdates);
+
+    console.log('⚙️ Create/Update User - Attempting database operation');
+    const user = await UserProfile.findOneAndUpdate(
       { phone },
-      { 
-        ...updates,
-        lastActive: new Date()
-      },
+      { $set: cleanedUpdates },
       { 
         new: true,
+        upsert: true,
         runValidators: true
       }
     );
 
-    console.log('✅ Update Profile - Success:', {
-      userId: profile.userId,
-      phone: profile.phone,
-      updatedFields: Object.keys(updates)
-    });
-
-    res.json(profile);
+    console.log('✅ Create/Update User - Success:', user);
+    res.json(user);
   } catch (error) {
-    console.error('❌ Update Profile - Error:', {
+    console.error('❌ Create/Update User - Error:', {
       message: error.message,
       stack: error.stack,
       name: error.name
     });
-    res.status(400).json({ 
-      message: error.message,
-      details: error.errors || {}
+    res.status(500).json({ 
+      message: 'Error creating/updating user profile', 
+      error: error.message 
     });
   }
 };
 
 // Delete user profile
-exports.deleteUserProfile = async (req, res) => {
+exports.deleteUser = async (req, res) => {
   try {
     const { phone } = req.params;
-    console.log('🗑️ Delete Profile - Request:', {
-      phone,
-      params: req.params
-    });
+    console.log('🗑️ Delete User - Request:', { phone });
 
-    const profile = await UserProfile.findOneAndDelete({ phone });
-    console.log('🗑️ Delete Profile - Result:', profile);
-
-    if (!profile) {
-      console.log('❌ Delete Profile - Profile not found:', phone);
-      return res.status(404).json({ message: 'User profile not found' });
+    const user = await UserProfile.findOneAndDelete({ phone });
+    if (!user) {
+      console.log('❌ Delete User - User not found:', phone);
+      return res.status(404).json({ message: 'User not found' });
     }
-    console.log('✅ Delete Profile - Success');
-    res.json({ message: 'User profile deleted successfully' });
+
+    console.log('✅ Delete User - Success:', user);
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('❌ Delete Profile - Error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('❌ Delete User - Error:', error);
+    res.status(500).json({ message: 'Error deleting user profile', error: error.message });
   }
 };
 
@@ -191,56 +122,39 @@ exports.updateUserStats = async (req, res) => {
   try {
     const { phone } = req.params;
     const { stats } = req.body;
-    console.log('📊 Update Stats - Request:', {
-      phone,
-      stats,
-      params: req.params,
-      body: req.body
-    });
+    console.log('📊 Update Stats - Request:', { phone, stats });
 
-    // First check if user exists
-    const existingUser = await UserProfile.findOne({ phone });
-    console.log('📊 Update Stats - Existing User Check:', existingUser);
-
-    if (!existingUser) {
-      console.log('❌ Update Stats - User not found:', phone);
-      return res.status(404).json({ message: 'User profile not found. Please create a profile first.' });
-    }
-
-    const profile = await UserProfile.findOneAndUpdate(
+    const user = await UserProfile.findOneAndUpdate(
       { phone },
       { $set: { stats } },
       { new: true, runValidators: true }
     );
-    console.log('✅ Update Stats - Success:', profile);
 
-    res.json(profile);
+    if (!user) {
+      console.log('❌ Update Stats - User not found:', phone);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log('✅ Update Stats - Success:', user);
+    res.json(user);
   } catch (error) {
     console.error('❌ Update Stats - Error:', error);
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Error updating user stats', error: error.message });
   }
 };
 
-// Add post to user's created posts
+// Add created post
 exports.addCreatedPost = async (req, res) => {
   try {
     const { phone } = req.params;
     const { postId, postType } = req.body;
-    console.log('📝 Add Post - Request:', {
-      phone,
-      postId,
-      postType,
-      params: req.params,
-      body: req.body
-    });
+    console.log('📝 Add Post - Request:', { phone, postId, postType });
 
-    // First check if user exists
-    const existingUser = await UserProfile.findOne({ phone });
-    console.log('📝 Add Post - Existing User Check:', existingUser);
-
-    if (!existingUser) {
-      console.log('❌ Add Post - User not found:', phone);
-      return res.status(404).json({ message: 'User profile not found. Please create a profile first.' });
+    if (!postId || !postType) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        required: ['postId', 'postType']
+      });
     }
 
     const updateField = {
@@ -250,21 +164,31 @@ exports.addCreatedPost = async (req, res) => {
     }[postType];
 
     if (!updateField) {
-      console.log('❌ Add Post - Invalid post type:', postType);
-      return res.status(400).json({ message: 'Invalid post type' });
+      return res.status(400).json({ 
+        message: 'Invalid post type',
+        validTypes: ['Offer Help', 'Ask for Help', 'Story']
+      });
     }
 
-    const profile = await UserProfile.findOneAndUpdate(
+    const user = await UserProfile.findOneAndUpdate(
       { phone },
-      { $push: { [updateField]: postId } },
+      { 
+        $addToSet: { [updateField]: postId },
+        $inc: { [`stats.${updateField.replace('created', '').toLowerCase()}Count`]: 1 }
+      },
       { new: true }
     );
-    console.log('✅ Add Post - Success:', profile);
 
-    res.json(profile);
+    if (!user) {
+      console.log('❌ Add Post - User not found:', phone);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log('✅ Add Post - Success:', user);
+    res.json(user);
   } catch (error) {
     console.error('❌ Add Post - Error:', error);
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Error adding created post', error: error.message });
   }
 };
 
