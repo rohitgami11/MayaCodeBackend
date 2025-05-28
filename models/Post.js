@@ -1,5 +1,17 @@
 const mongoose = require('mongoose');
 
+// Location Schema
+const locationSchema = new mongoose.Schema({
+  latitude: {
+    type: Number,
+    required: true
+  },
+  longitude: {
+    type: Number,
+    required: true
+  }
+});
+
 const postSchema = new mongoose.Schema({
   phone: {
     type: String,
@@ -21,7 +33,12 @@ const postSchema = new mongoose.Schema({
   images: [{
     type: String
   }],
-  location: String,
+  location: {
+    type: locationSchema,
+    required: function() {
+      return this.type !== 'Story';
+    }
+  },
   tags: [String],
   status: {
     type: String,
@@ -39,6 +56,17 @@ const postSchema = new mongoose.Schema({
   expiresAt: Date
 }, {
   timestamps: true
+});
+
+// Add validation for required fields based on post type
+postSchema.pre('validate', function(next) {
+  if (!this.title || !this.content) {
+    next(new Error('Title and content are required'));
+  }
+  if (this.type !== 'Story' && !this.location) {
+    next(new Error('Location is required for Offer Help and Ask for Help posts'));
+  }
+  next();
 });
 
 module.exports = mongoose.model('Post', postSchema); 

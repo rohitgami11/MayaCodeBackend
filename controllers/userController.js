@@ -32,7 +32,6 @@ exports.createOrUpdateUser = async (req, res) => {
       name: req.body.name,
       userType: req.body.userType,
       age: req.body.age,
-      location: req.body.location,
       languages: req.body.languages || [],
       profileImage: req.body.profileImage,
       lastActive: new Date()
@@ -60,7 +59,6 @@ exports.createOrUpdateUser = async (req, res) => {
       phone, // Add phone to the updates
       name: updates.name,
       age: updates.age,
-      location: updates.location,
       userType: updates.userType,
       languages: updates.languages,
       profileImage: updates.profileImage,
@@ -80,7 +78,8 @@ exports.createOrUpdateUser = async (req, res) => {
       { 
         new: true,
         upsert: true,
-        runValidators: true
+        runValidators: true,
+        setDefaultsOnInsert: true
       }
     );
 

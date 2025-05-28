@@ -20,6 +20,31 @@ const connectDB = async () => {
       user: conn.connection.user,
       cluster: process.env.MONGODB_URI?.includes('Cluster0') ? 'Cluster0' : 'Unknown cluster'
     });
+
+    // Handle indexes after connection
+    const db = mongoose.connection.db;
+    try {
+      const collection = db.collection('userprofiles');
+      const indexes = await collection.indexes();
+      console.log('📊 Current indexes:', indexes);
+
+      // Drop userId index if it exists
+      if (indexes.some(index => index.name === 'userId_1')) {
+        console.log('🗑️ Dropping userId_1 index...');
+        await collection.dropIndex('userId_1');
+        console.log('✅ userId_1 index dropped successfully');
+      }
+
+      // Create phone index if it doesn't exist
+      if (!indexes.some(index => index.name === 'phone_1')) {
+        console.log('📱 Creating phone_1 index...');
+        await collection.createIndex({ phone: 1 }, { unique: true });
+        console.log('✅ phone_1 index created successfully');
+      }
+    } catch (indexError) {
+      console.error('❌ Index operation error:', indexError);
+    }
+
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error.message);
     process.exit(1);

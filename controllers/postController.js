@@ -19,8 +19,17 @@ exports.createPost = async (req, res) => {
 exports.getPosts = async (req, res) => {
   try {
     logger.info('🔍 Get Posts - Request received');
-    const posts = await Post.find().sort({ createdAt: -1 });
-    logger.info('✅ Get Posts - Success:', { count: posts.length });
+    const { type } = req.query; // Get the type from query parameters
+    let query = {};
+
+    if (type) {
+      // Add type filter to the query if type is provided
+      query.type = type;
+      logger.info('🔍 Get Posts - Filtering by type:', type);
+    }
+
+    const posts = await Post.find(query).sort({ createdAt: -1 }); // Apply the query
+    logger.info('✅ Get Posts - Success:', { count: posts.length, query });
     res.json(posts);
   } catch (error) {
     logger.error('❌ Get Posts - Error:', error);
